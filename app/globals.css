@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #061014; color: #e6f8ff; }
+
+a { color: inherit; text-decoration: none; }
+
+.table-scroll { scrollbar-width: thin; scrollbar-color: #35d6ff #0b1b22; }
