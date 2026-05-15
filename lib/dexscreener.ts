@@ -1,6 +1,6 @@
 import type { TokenInput } from './types';
 
-const DEXSCREENER_BASE_URL = process.env.DEXSCREENER_API_BASE ?? 'https://api.dexscreener.com';
+const DEXSCREENER_BASE_URL = (process.env.DEXSCREENER_API_BASE ?? 'https://api.dexscreener.com').replace(/\/$/, '');
 
 type DexPair = {
   chainId?: string;
@@ -23,20 +23,29 @@ type DexPair = {
 };
 
 type DexSearchResponse = {
-  pairs?: DexPair[];
+  pairs?: DexPair[] | null;
 };
 
 async function dexFetch<T>(path: string): Promise<T> {
-  const response = await fetch(`${DEXSCREENER_BASE_URL}${path}`, {
-    next: { revalidate: 30 }
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12_000);
 
-  if (!response.ok) {
-    const body = await response.text().catch(() => '');
-    throw new Error(`DEX Screener request failed ${response.status}: ${body}`);
+  try {
+    const response = await fetch(`${DEXSCREENER_BASE_URL}${path}`, {
+      headers: { accept: 'application/json' },
+      cache: 'no-store',
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      throw new Error(`DEX Screener request failed ${response.status}: ${body.slice(0, 180)}`);
+    }
+
+    return response.json() as Promise<T>;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return response.json() as Promise<T>;
 }
 
 export async function searchDexPairs(query: string) {
@@ -59,16 +68,16 @@ export function dexPairToTokenInput(pair: DexPair): TokenInput | null {
   const symbol = pair.baseToken?.symbol;
   const name = pair.baseToken?.name ?? symbol;
   const price = Number(pair.priceUsd ?? 0);
-  const liquidity = pair.liquidity?.usd ?? 0;
-  const volume5m = pair.volume?.m5 ?? 0;
-  const volume1h = pair.volume?.h1 ?? 0;
-  const volume24h = pair.volume?.h24 ?? 0;
+  const liquidity = Number(pair.liquidity?.usd ?? 0);
+  const volume5m = Number(pair.volume?.m5 ?? 0);
+  const volume1h = Number(pair.volume?.h1 ?? 0);
+  const volume24h = Number(pair.volume?.h24 ?? 0);
   const h1Tx = pair.txns?.h1;
-  const buys = h1Tx?.buys ?? 0;
-  const sells = h1Tx?.sells ?? 0;
-  const buySellRatio = sells <= 0 ? buys || 1 : buys / sells;
+  const buys = Number(h1Tx?.buys ?? 0);
+  const sells = Number(h1Tx?.sells ?? 0);
+  const buySellRatio = sells <= 0 ? Math.max(1, buys) : buys / sells;
 
-  if (!symbol || !price || !liquidity) return null;
+  if (!symbol || !Number.isFinite(price) || price <= 0 || !Number.isFinite(liquidity) || liquidity <= 0) return null;
 
   const createdAt = pair.pairCreatedAt ?? Date.now();
   const ageHours = Math.max(1, (Date.now() - createdAt) / 1000 / 60 / 60);
@@ -79,13 +88,13 @@ export function dexPairToTokenInput(pair: DexPair): TokenInput | null {
     chain: pair.chainId ?? 'unknown',
     exchange: pair.dexId ?? 'DEX',
     price,
-    marketCap: pair.marketCap ?? pair.fdv ?? 0,
-    fdv: pair.fdv ?? pair.marketCap ?? 0,
+    marketCap: Number(pair.marketCap ?? pair.fdv ?? 0),
+    fdv: Number(pair.fdv ?? pair.marketCap ?? 0),
     liquidity,
     ageHours,
-    priceChange5m: pair.priceChange?.m5 ?? 0,
-    priceChange1h: pair.priceChange?.h1 ?? 0,
-    priceChange24h: pair.priceChange?.h24 ?? 0,
+    priceChange5m: Number(pair.priceChange?.m5 ?? 0),
+    priceChange1h: Number(pair.priceChange?.h1 ?? 0),
+    priceChange24h: Number(pair.priceChange?.h24 ?? 0),
     volume5m,
     volume15m: volume5m * 3,
     volume1h,
@@ -108,9 +117,11 @@ export function dexPairToTokenInput(pair: DexPair): TokenInput | null {
 
 export async function scanDexQuery(query: string) {
   const data = await searchDexPairs(query);
-  return (data.pairs ?? [])
+  const pairs = Array.isArray(data.pairs) ? data.pairs : [];
+
+  return pairs
     .map(dexPairToTokenInput)
     .filter((pair): pair is TokenInput => Boolean(pair))
-    .filter((token) => token.liquidity >= 25_000 && token.volume1h >= 5_000)
+    .filter((token) => token.liquidity >= 10_000 && token.volume1h >= 1_000)
     .slice(0, 40);
 }
