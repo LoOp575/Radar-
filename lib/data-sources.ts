@@ -20,16 +20,22 @@ export const dataSources = [
     purpose: 'DEX pair, liquidity, volume, pair age, boosted/latest token.'
   },
   {
+    name: 'Coinalyze',
+    status: process.env.COINALYZE_API_KEY ? 'ready' : 'needs_api_key',
+    purpose: 'Open interest, funding rate, long/short ratio, and futures pressure engine.',
+    env: 'COINALYZE_API_KEY'
+  },
+  {
     name: 'CoinGlass / Exchange Futures',
     status: process.env.COINGLASS_API_KEY ? 'ready' : 'needs_api_key',
-    purpose: 'Open interest, funding, long/short ratio, liquidation pressure.',
+    purpose: 'Backup derivatives source for open interest, funding, long/short ratio, liquidation pressure.',
     env: 'COINGLASS_API_KEY'
   },
   {
-    name: 'Chain Explorers',
-    status: process.env.ETHERSCAN_API_KEY || process.env.SOLSCAN_API_KEY ? 'ready' : 'needs_api_key',
-    purpose: 'Wallet transaction, holder, whale flow, dev wallet movement.',
-    env: 'ETHERSCAN_API_KEY / SOLSCAN_API_KEY'
+    name: 'Chain Explorers / Helius',
+    status: process.env.ETHERSCAN_API_KEY || process.env.SOLSCAN_API_KEY || process.env.HELIUS_API_KEY ? 'ready' : 'needs_api_key',
+    purpose: 'Wallet transaction, holder, whale flow, dev wallet movement, and Solana wallet analyzer.',
+    env: 'ETHERSCAN_API_KEY / SOLSCAN_API_KEY / HELIUS_API_KEY'
   }
 ] as const;
 
