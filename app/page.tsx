@@ -1,4 +1,4 @@
-import { AlertTriangle, BrainCircuit, Database, ExternalLink, RadioTower, ShieldCheck, TrendingUp, WalletCards, Zap } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, BrainCircuit, Database, ExternalLink, RadioTower, ShieldCheck, Sparkles, TrendingUp, WalletCards, Zap } from 'lucide-react';
 import { mockTokens } from '@/lib/mock-data';
 import { formatCompact, scoreTokens } from '@/lib/scoring';
 
@@ -8,10 +8,10 @@ const strongSignals = signals.filter((s) => s.pps >= 70 && s.risk <= 40).length;
 const dangerSignals = signals.filter((s) => s.signal === 'DANGER' || s.signal === 'LATE / DO NOT CHASE').length;
 
 const liveTools = [
-  { title: 'Mock PPS Scanner', href: '/api/signals', desc: 'Cek scoring engine awal', status: 'LIVE' },
-  { title: 'DEX Screener Real Scan', href: '/api/dex?q=SOL', desc: 'Scan pair DEX real dari query token', status: 'LIVE' },
-  { title: 'Coinalyze Futures', href: '/api/derivatives', desc: 'OI + funding dari Coinalyze env', status: 'ENV' },
-  { title: 'Signal History', href: '/api/signals/history', desc: 'Histori sinyal dari Supabase', status: 'DB' }
+  { title: 'PPS Scanner', href: '/api/signals', desc: 'Score engine', status: 'LIVE' },
+  { title: 'DEX Scan', href: '/api/dex?q=SOL', desc: 'Pair real-time', status: 'LIVE' },
+  { title: 'Futures', href: '/api/derivatives', desc: 'OI + funding', status: 'ENV' },
+  { title: 'History', href: '/api/signals/history', desc: 'Supabase', status: 'DB' }
 ];
 
 function badgeClass(score: number, type: 'pps' | 'risk' = 'pps') {
@@ -33,80 +33,98 @@ function signalBadge(signal: string) {
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#123844_0,#061014_38%,#03090b_100%)] px-4 py-6 text-slate-100 md:px-8">
-      <section className="mx-auto max-w-7xl space-y-6">
-        <header className="flex flex-col gap-5 rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-cyan-950/30 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs text-cyan-100">
-              <RadioTower size={14} /> PumpRadar Vision LIVE TOOLS
-            </div>
-            <h1 className="text-3xl font-black tracking-tight md:text-5xl">Early Pump Scanner</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
-              Dashboard untuk ranking token berdasarkan volume anomaly, wallet accumulation, derivatives pressure, liquidity health, social acceleration, market structure, dan risk filter.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-emerald-100 ring-1 ring-emerald-400/25">DEX Scanner aktif</span>
-              <span className="rounded-full bg-cyan-400/15 px-3 py-1 text-cyan-100 ring-1 ring-cyan-400/25">Coinalyze route aktif</span>
-              <span className="rounded-full bg-amber-400/15 px-3 py-1 text-amber-100 ring-1 ring-amber-400/25">Supabase siap env</span>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-4 md:min-w-72">
-            <p className="text-xs uppercase tracking-[0.25em] text-emerald-200/80">Top setup</p>
-            <div className="mt-2 flex items-end justify-between gap-4">
-              <div>
-                <p className="text-3xl font-black">{topSignal.symbol}</p>
-                <p className="text-sm text-slate-300">{topSignal.signal}</p>
+    <main className="min-h-screen overflow-hidden bg-[#02080b] text-slate-100">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(53,214,255,0.24),transparent_28%),radial-gradient(circle_at_85%_5%,rgba(72,240,164,0.18),transparent_24%),radial-gradient(circle_at_50%_100%,rgba(255,204,102,0.08),transparent_30%)]" />
+      <section className="relative mx-auto max-w-7xl space-y-4 px-3 py-4 md:space-y-6 md:px-8 md:py-7">
+        <header className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/[0.10] via-white/[0.045] to-cyan-300/[0.05] p-4 shadow-2xl shadow-cyan-950/30 backdrop-blur md:p-7">
+          <div className="absolute right-[-90px] top-[-90px] h-56 w-56 rounded-full bg-cyan-300/20 blur-3xl" />
+          <div className="absolute bottom-[-90px] left-[20%] h-52 w-52 rounded-full bg-emerald-300/10 blur-3xl" />
+          <div className="relative grid gap-4 md:grid-cols-[1.2fr_0.8fr] md:items-end">
+            <div>
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 text-[11px] font-bold text-cyan-100 shadow-lg shadow-cyan-950/30">
+                <RadioTower size={13} /> LIVE MARKET RADAR
               </div>
-              <div className="text-right">
-                <p className="text-4xl font-black text-emerald-200">{topSignal.pps}</p>
-                <p className="text-xs text-slate-400">PPS Score</p>
+              <h1 className="max-w-2xl text-3xl font-black leading-[0.95] tracking-tight md:text-6xl">
+                PumpRadar <span className="bg-gradient-to-r from-cyan-200 via-emerald-200 to-amber-100 bg-clip-text text-transparent">Vision</span>
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
+                Early pump scanner dengan PPS, risk filter, DEX real scan, futures pressure, dan histori sinyal untuk backtest.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-bold">
+                <span className="rounded-full bg-emerald-400/15 px-3 py-1.5 text-emerald-100 ring-1 ring-emerald-400/25">DEX aktif</span>
+                <span className="rounded-full bg-cyan-400/15 px-3 py-1.5 text-cyan-100 ring-1 ring-cyan-400/25">Coinalyze siap</span>
+                <span className="rounded-full bg-amber-400/15 px-3 py-1.5 text-amber-100 ring-1 ring-amber-400/25">Supabase ready</span>
+              </div>
+            </div>
+
+            <div className="rounded-[1.7rem] border border-emerald-300/20 bg-gradient-to-br from-emerald-300/15 to-cyan-300/5 p-4 shadow-2xl shadow-emerald-950/25">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-emerald-200/80">Top setup</p>
+                  <p className="mt-2 text-4xl font-black leading-none">{topSignal.symbol}</p>
+                  <p className="mt-1 text-xs font-bold text-emerald-100">{topSignal.signal}</p>
+                </div>
+                <div className="rounded-3xl bg-black/25 px-4 py-3 text-right ring-1 ring-white/10">
+                  <p className="text-5xl font-black text-emerald-200">{topSignal.pps}</p>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-400">PPS</p>
+                </div>
+              </div>
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-black/30">
+                <div className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-emerald-300 to-amber-200" style={{ width: `${topSignal.pps}%` }} />
               </div>
             </div>
           </div>
         </header>
 
-        <section className="grid gap-4 md:grid-cols-4">
-          <Metric icon={<TrendingUp />} label="Strong setups" value={strongSignals.toString()} hint="PPS ≥ 70 & risk rendah" />
-          <Metric icon={<AlertTriangle />} label="Danger / late" value={dangerSignals.toString()} hint="hindari FOMO" />
-          <Metric icon={<WalletCards />} label="Wallet engine" value="DNA" hint="smart wallet scoring" />
-          <Metric icon={<BrainCircuit />} label="Mode" value="LIVE" hint="API route sudah tersedia" />
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Metric icon={<TrendingUp />} label="Strong" value={strongSignals.toString()} hint="PPS ≥ 70" tone="green" />
+          <Metric icon={<AlertTriangle />} label="Danger" value={dangerSignals.toString()} hint="hindari FOMO" tone="red" />
+          <Metric icon={<WalletCards />} label="Wallet" value="DNA" hint="analyzer" tone="cyan" />
+          <Metric icon={<BrainCircuit />} label="Mode" value="LIVE" hint="API ready" tone="amber" />
         </section>
 
-        <section className="rounded-3xl border border-cyan-300/10 bg-radar-panel/80 p-5 shadow-xl shadow-black/20">
+        <section className="rounded-[1.8rem] border border-cyan-300/10 bg-white/[0.055] p-4 shadow-xl shadow-black/20 backdrop-blur md:p-5">
           <div className="mb-4 flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold">Live Tool Launcher</h2>
-              <p className="text-sm text-slate-400">Klik endpoint ini setelah deploy untuk melihat perubahan real dari API/backend.</p>
+              <h2 className="flex items-center gap-2 text-lg font-black md:text-xl"><Sparkles size={18} className="text-cyan-200" /> Live Tool Launcher</h2>
+              <p className="text-xs text-slate-400 md:text-sm">Endpoint penting dibuat lebih cepat diakses.</p>
             </div>
             <Zap className="text-cyan-200" />
           </div>
-          <div className="grid gap-3 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {liveTools.map((tool) => (
-              <a key={tool.href} href={tool.href} target="_blank" className="group rounded-2xl border border-white/10 bg-white/[0.035] p-4 transition hover:-translate-y-0.5 hover:bg-white/[0.07]">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <span className="rounded-full bg-cyan-400/15 px-2.5 py-1 text-[10px] font-black text-cyan-100 ring-1 ring-cyan-400/25">{tool.status}</span>
-                  <ExternalLink size={15} className="text-slate-400 group-hover:text-cyan-100" />
+              <a key={tool.href} href={tool.href} target="_blank" className="group rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.025] p-3 transition hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-white/[0.09] md:p-4">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <span className="rounded-full bg-cyan-400/15 px-2 py-1 text-[9px] font-black text-cyan-100 ring-1 ring-cyan-400/25">{tool.status}</span>
+                  <ExternalLink size={14} className="text-slate-400 group-hover:text-cyan-100" />
                 </div>
-                <p className="font-black text-white">{tool.title}</p>
-                <p className="mt-1 text-xs leading-5 text-slate-400">{tool.desc}</p>
-                <code className="mt-3 block truncate rounded-xl bg-black/25 px-3 py-2 text-[11px] text-cyan-100">{tool.href}</code>
+                <p className="text-sm font-black text-white md:text-base">{tool.title}</p>
+                <p className="mt-1 text-[11px] leading-4 text-slate-400 md:text-xs">{tool.desc}</p>
+                <code className="mt-3 block truncate rounded-xl bg-black/25 px-2.5 py-2 text-[10px] text-cyan-100">{tool.href}</code>
               </a>
             ))}
           </div>
         </section>
 
-        <section className="grid gap-5 lg:grid-cols-[1.45fr_0.8fr]">
-          <div className="rounded-3xl border border-white/10 bg-radar-panel/80 p-4 shadow-xl shadow-black/20">
+        <section className="grid gap-4 lg:grid-cols-[1.45fr_0.8fr]">
+          <div className="rounded-[1.8rem] border border-white/10 bg-white/[0.055] p-4 shadow-xl shadow-black/20 backdrop-blur">
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold">Signal Ranking</h2>
-                <p className="text-sm text-slate-400">High precision setup dicari dari PPS tinggi + risk rendah, bukan coin yang sudah telat pump.</p>
+                <h2 className="text-xl font-black">Signal Ranking</h2>
+                <p className="text-xs text-slate-400 md:text-sm">Setup ketat: PPS tinggi, risk rendah, belum telat pump.</p>
               </div>
               <div className="hidden items-center gap-2 rounded-full bg-white/5 px-3 py-2 text-xs text-slate-300 md:flex">
                 <ShieldCheck size={15} /> Risk filtered
               </div>
             </div>
-            <div className="table-scroll overflow-x-auto">
+
+            <div className="space-y-3 md:hidden">
+              {signals.map((token, index) => (
+                <MobileSignalCard key={token.symbol} token={token} index={index} />
+              ))}
+            </div>
+
+            <div className="table-scroll hidden overflow-x-auto md:block">
               <table className="w-full min-w-[980px] border-separate border-spacing-y-2 text-left text-sm">
                 <thead className="text-xs uppercase tracking-wider text-slate-400">
                   <tr>
@@ -126,14 +144,8 @@ export default function Home() {
                   {signals.map((token, index) => (
                     <tr key={token.symbol} className="rounded-2xl bg-white/[0.035] transition hover:bg-white/[0.07]">
                       <td className="rounded-l-2xl px-3 py-4 font-bold text-slate-400">#{index + 1}</td>
-                      <td className="px-3 py-4">
-                        <p className="font-black text-white">{token.symbol}</p>
-                        <p className="text-xs text-slate-400">{token.name}</p>
-                      </td>
-                      <td className="px-3 py-4 text-slate-300">
-                        <p>{token.chain}</p>
-                        <p className="text-xs text-slate-500">{token.exchange}</p>
-                      </td>
+                      <td className="px-3 py-4"><p className="font-black text-white">{token.symbol}</p><p className="text-xs text-slate-400">{token.name}</p></td>
+                      <td className="px-3 py-4 text-slate-300"><p>{token.chain}</p><p className="text-xs text-slate-500">{token.exchange}</p></td>
                       <td className="px-3 py-4"><span className={`rounded-full px-3 py-1 font-black ring-1 ${badgeClass(token.pps)}`}>{token.pps}</span></td>
                       <td className="px-3 py-4"><span className={`rounded-full px-3 py-1 font-black ring-1 ${badgeClass(token.risk, 'risk')}`}>{token.risk}</span></td>
                       <td className="px-3 py-4"><span className={`rounded-full px-3 py-1 text-xs font-bold ring-1 ${signalBadge(token.signal)}`}>{token.signal}</span></td>
@@ -148,9 +160,9 @@ export default function Home() {
             </div>
           </div>
 
-          <aside className="space-y-5">
-            <div className="rounded-3xl border border-white/10 bg-radar-panel/80 p-5 shadow-xl shadow-black/20">
-              <h2 className="mb-1 text-xl font-bold">Top Signal Detail</h2>
+          <aside className="space-y-4">
+            <div className="rounded-[1.8rem] border border-white/10 bg-white/[0.055] p-4 shadow-xl shadow-black/20 backdrop-blur md:p-5">
+              <h2 className="mb-1 text-xl font-black">Top Signal Detail</h2>
               <p className="text-sm text-slate-400">{topSignal.name} / {topSignal.chain}</p>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <Mini label="Price" value={`$${topSignal.price}`} />
@@ -161,17 +173,9 @@ export default function Home() {
               <div className="mt-5 space-y-3">
                 <h3 className="font-bold text-emerald-100">Alasan sinyal</h3>
                 <ul className="space-y-2 text-sm text-slate-300">
-                  {topSignal.reasons.map((reason) => <li key={reason}>✅ {reason}</li>)}
+                  {topSignal.reasons.slice(0, 5).map((reason) => <li key={reason}>✅ {reason}</li>)}
                 </ul>
-                {topSignal.warnings.length > 0 && (
-                  <>
-                    <h3 className="font-bold text-amber-100">Warning</h3>
-                    <ul className="space-y-2 text-sm text-slate-300">
-                      {topSignal.warnings.map((warning) => <li key={warning}>⚠️ {warning}</li>)}
-                    </ul>
-                  </>
-                )}
-                <div className="rounded-2xl bg-white/[0.04] p-4 text-sm text-slate-300">
+                <div className="rounded-2xl bg-black/20 p-4 text-sm text-slate-300 ring-1 ring-white/10">
                   <p className="font-bold text-white">Invalidation</p>
                   <p>{topSignal.invalidation}</p>
                   <p className="mt-3 font-bold text-white">Target</p>
@@ -180,13 +184,13 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-radar-panel/80 p-5 shadow-xl shadow-black/20">
-              <h2 className="text-xl font-bold">Backend Status</h2>
+            <div className="rounded-[1.8rem] border border-white/10 bg-white/[0.055] p-4 shadow-xl shadow-black/20 backdrop-blur md:p-5">
+              <h2 className="text-xl font-black">Backend Status</h2>
               <div className="mt-4 space-y-3 text-sm text-slate-300">
-                <Step title="DEX Real Data" desc="/api/dex?q=SOL sudah siap untuk scan pair DEX real." />
-                <Step title="Coinalyze Futures" desc="/api/derivatives siap baca OI + funding jika env sudah diisi." />
-                <Step title="Supabase History" desc="/api/signals/history siap setelah DATABASE_URL + db push." />
-                <Step title="Prisma Build" desc="Build sudah menjalankan prisma generate otomatis." />
+                <Step title="DEX Real Data" desc="/api/dex?q=SOL siap scan pair real." />
+                <Step title="Coinalyze Futures" desc="/api/derivatives siap OI + funding." />
+                <Step title="Supabase History" desc="/api/signals/history untuk histori." />
+                <Step title="Prisma Build" desc="prisma generate otomatis saat build." />
               </div>
             </div>
           </aside>
@@ -196,29 +200,63 @@ export default function Home() {
   );
 }
 
-function Metric({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: string; hint: string }) {
+function Metric({ icon, label, value, hint, tone }: { icon: React.ReactNode; label: string; value: string; hint: string; tone: 'green' | 'red' | 'cyan' | 'amber' }) {
+  const toneClass = {
+    green: 'from-emerald-300/18 text-emerald-100',
+    red: 'from-red-300/18 text-red-100',
+    cyan: 'from-cyan-300/18 text-cyan-100',
+    amber: 'from-amber-300/18 text-amber-100'
+  }[tone];
+
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-xl shadow-black/20">
-      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-300/10 text-cyan-100">{icon}</div>
-      <p className="text-sm text-slate-400">{label}</p>
-      <p className="mt-1 text-3xl font-black">{value}</p>
-      <p className="mt-1 text-xs text-slate-500">{hint}</p>
+    <div className={`rounded-[1.5rem] border border-white/10 bg-gradient-to-br ${toneClass} to-white/[0.035] p-3 shadow-xl shadow-black/20 backdrop-blur md:p-4`}>
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-black/20 ring-1 ring-white/10">{icon}</div>
+      <p className="text-xs text-slate-400 md:text-sm">{label}</p>
+      <p className="mt-0.5 text-2xl font-black md:text-3xl">{value}</p>
+      <p className="mt-0.5 text-[11px] text-slate-500 md:text-xs">{hint}</p>
+    </div>
+  );
+}
+
+function MobileSignalCard({ token, index }: { token: typeof signals[number]; index: number }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.025] p-3 shadow-lg shadow-black/10">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-bold text-slate-500">#{index + 1} / {token.chain}</p>
+          <p className="text-xl font-black text-white">{token.symbol}</p>
+          <p className="text-xs text-slate-400">{token.exchange}</p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <span className={`rounded-full px-3 py-1 text-sm font-black ring-1 ${badgeClass(token.pps)}`}>{token.pps} PPS</span>
+          <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ring-1 ${signalBadge(token.signal)}`}>{token.signal}</span>
+        </div>
+      </div>
+      <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+        <Mini label="Risk" value={String(token.risk)} />
+        <Mini label="Vol 15m" value={`$${formatCompact(token.volume15m)}`} />
+        <Mini label="Liq" value={`$${formatCompact(token.liquidity)}`} />
+      </div>
+      <div className="mt-3 flex items-center justify-between rounded-xl bg-black/20 px-3 py-2 text-xs text-slate-300 ring-1 ring-white/10">
+        <span>Smart buy: <b className="text-emerald-200">${formatCompact(token.smartWalletNetBuyUsd)}</b></span>
+        <ArrowUpRight size={14} className="text-cyan-200" />
+      </div>
     </div>
   );
 }
 
 function Mini({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-white/[0.04] p-3">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-1 font-black text-white">{value}</p>
+    <div className="rounded-2xl bg-black/20 p-3 ring-1 ring-white/10">
+      <p className="text-[10px] text-slate-500 md:text-xs">{label}</p>
+      <p className="mt-1 text-sm font-black text-white md:text-base">{value}</p>
     </div>
   );
 }
 
 function Step({ title, desc }: { title: string; desc: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+    <div className="rounded-2xl border border-white/10 bg-black/15 p-3">
       <p className="font-bold text-white">{title}</p>
       <p className="mt-1 text-slate-400">{desc}</p>
     </div>
