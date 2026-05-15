@@ -1,4 +1,6 @@
-import { AlertTriangle, ArrowUpRight, BrainCircuit, Database, ExternalLink, RadioTower, ShieldCheck, Sparkles, TrendingUp, WalletCards, Zap } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { AlertTriangle, ArrowUpRight, BrainCircuit, RadioTower, ShieldCheck, TrendingUp, WalletCards } from 'lucide-react';
+import { LiveTradingTerminal } from '@/components/LiveTradingTerminal';
 import { mockTokens } from '@/lib/mock-data';
 import { formatCompact, scoreTokens } from '@/lib/scoring';
 
@@ -6,13 +8,6 @@ const signals = scoreTokens(mockTokens);
 const topSignal = signals[0];
 const strongSignals = signals.filter((s) => s.pps >= 70 && s.risk <= 40).length;
 const dangerSignals = signals.filter((s) => s.signal === 'DANGER' || s.signal === 'LATE / DO NOT CHASE').length;
-
-const liveTools = [
-  { title: 'PPS Scanner', href: '/api/signals', desc: 'Score engine', status: 'LIVE' },
-  { title: 'DEX Scan', href: '/api/dex?q=SOL', desc: 'Pair real-time', status: 'LIVE' },
-  { title: 'Futures', href: '/api/derivatives', desc: 'OI + funding', status: 'ENV' },
-  { title: 'History', href: '/api/signals/history', desc: 'Supabase', status: 'DB' }
-];
 
 function badgeClass(score: number, type: 'pps' | 'risk' = 'pps') {
   if (type === 'risk') {
@@ -48,7 +43,7 @@ export default function Home() {
                 PumpRadar <span className="bg-gradient-to-r from-cyan-200 via-emerald-200 to-amber-100 bg-clip-text text-transparent">Vision</span>
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
-                Early pump scanner dengan PPS, risk filter, DEX real scan, futures pressure, dan histori sinyal untuk backtest.
+                Terminal trading untuk scan DEX real-time, PPS score, risk filter, futures pressure, dan histori sinyal.
               </p>
               <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-bold">
                 <span className="rounded-full bg-emerald-400/15 px-3 py-1.5 text-emerald-100 ring-1 ring-emerald-400/25">DEX aktif</span>
@@ -80,31 +75,10 @@ export default function Home() {
           <Metric icon={<TrendingUp />} label="Strong" value={strongSignals.toString()} hint="PPS ≥ 70" tone="green" />
           <Metric icon={<AlertTriangle />} label="Danger" value={dangerSignals.toString()} hint="hindari FOMO" tone="red" />
           <Metric icon={<WalletCards />} label="Wallet" value="DNA" hint="analyzer" tone="cyan" />
-          <Metric icon={<BrainCircuit />} label="Mode" value="LIVE" hint="API ready" tone="amber" />
+          <Metric icon={<BrainCircuit />} label="Mode" value="TERM" hint="live terminal" tone="amber" />
         </section>
 
-        <section className="rounded-[1.8rem] border border-cyan-300/10 bg-white/[0.055] p-4 shadow-xl shadow-black/20 backdrop-blur md:p-5">
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <h2 className="flex items-center gap-2 text-lg font-black md:text-xl"><Sparkles size={18} className="text-cyan-200" /> Live Tool Launcher</h2>
-              <p className="text-xs text-slate-400 md:text-sm">Endpoint penting dibuat lebih cepat diakses.</p>
-            </div>
-            <Zap className="text-cyan-200" />
-          </div>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {liveTools.map((tool) => (
-              <a key={tool.href} href={tool.href} target="_blank" className="group rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.025] p-3 transition hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-white/[0.09] md:p-4">
-                <div className="mb-3 flex items-center justify-between gap-2">
-                  <span className="rounded-full bg-cyan-400/15 px-2 py-1 text-[9px] font-black text-cyan-100 ring-1 ring-cyan-400/25">{tool.status}</span>
-                  <ExternalLink size={14} className="text-slate-400 group-hover:text-cyan-100" />
-                </div>
-                <p className="text-sm font-black text-white md:text-base">{tool.title}</p>
-                <p className="mt-1 text-[11px] leading-4 text-slate-400 md:text-xs">{tool.desc}</p>
-                <code className="mt-3 block truncate rounded-xl bg-black/25 px-2.5 py-2 text-[10px] text-cyan-100">{tool.href}</code>
-              </a>
-            ))}
-          </div>
-        </section>
+        <LiveTradingTerminal />
 
         <section className="grid gap-4 lg:grid-cols-[1.45fr_0.8fr]">
           <div className="rounded-[1.8rem] border border-white/10 bg-white/[0.055] p-4 shadow-xl shadow-black/20 backdrop-blur">
@@ -200,7 +174,7 @@ export default function Home() {
   );
 }
 
-function Metric({ icon, label, value, hint, tone }: { icon: React.ReactNode; label: string; value: string; hint: string; tone: 'green' | 'red' | 'cyan' | 'amber' }) {
+function Metric({ icon, label, value, hint, tone }: { icon: ReactNode; label: string; value: string; hint: string; tone: 'green' | 'red' | 'cyan' | 'amber' }) {
   const toneClass = {
     green: 'from-emerald-300/18 text-emerald-100',
     red: 'from-red-300/18 text-red-100',
