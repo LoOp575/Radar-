@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, BrainCircuit, RadioTower, ShieldCheck, TrendingUp, WalletCards } from 'lucide-react';
+import { AlertTriangle, BrainCircuit, Database, ExternalLink, RadioTower, ShieldCheck, TrendingUp, WalletCards, Zap } from 'lucide-react';
 import { mockTokens } from '@/lib/mock-data';
 import { formatCompact, scoreTokens } from '@/lib/scoring';
 
@@ -6,6 +6,13 @@ const signals = scoreTokens(mockTokens);
 const topSignal = signals[0];
 const strongSignals = signals.filter((s) => s.pps >= 70 && s.risk <= 40).length;
 const dangerSignals = signals.filter((s) => s.signal === 'DANGER' || s.signal === 'LATE / DO NOT CHASE').length;
+
+const liveTools = [
+  { title: 'Mock PPS Scanner', href: '/api/signals', desc: 'Cek scoring engine awal', status: 'LIVE' },
+  { title: 'DEX Screener Real Scan', href: '/api/dex?q=SOL', desc: 'Scan pair DEX real dari query token', status: 'LIVE' },
+  { title: 'Coinalyze Futures', href: '/api/derivatives', desc: 'OI + funding dari Coinalyze env', status: 'ENV' },
+  { title: 'Signal History', href: '/api/signals/history', desc: 'Histori sinyal dari Supabase', status: 'DB' }
+];
 
 function badgeClass(score: number, type: 'pps' | 'risk' = 'pps') {
   if (type === 'risk') {
@@ -31,12 +38,17 @@ export default function Home() {
         <header className="flex flex-col gap-5 rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-cyan-950/30 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs text-cyan-100">
-              <RadioTower size={14} /> PumpRadar Vision MVP
+              <RadioTower size={14} /> PumpRadar Vision LIVE TOOLS
             </div>
             <h1 className="text-3xl font-black tracking-tight md:text-5xl">Early Pump Scanner</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
               Dashboard untuk ranking token berdasarkan volume anomaly, wallet accumulation, derivatives pressure, liquidity health, social acceleration, market structure, dan risk filter.
             </p>
+            <div className="mt-4 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-emerald-100 ring-1 ring-emerald-400/25">DEX Scanner aktif</span>
+              <span className="rounded-full bg-cyan-400/15 px-3 py-1 text-cyan-100 ring-1 ring-cyan-400/25">Coinalyze route aktif</span>
+              <span className="rounded-full bg-amber-400/15 px-3 py-1 text-amber-100 ring-1 ring-amber-400/25">Supabase siap env</span>
+            </div>
           </div>
           <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-4 md:min-w-72">
             <p className="text-xs uppercase tracking-[0.25em] text-emerald-200/80">Top setup</p>
@@ -57,7 +69,30 @@ export default function Home() {
           <Metric icon={<TrendingUp />} label="Strong setups" value={strongSignals.toString()} hint="PPS ≥ 70 & risk rendah" />
           <Metric icon={<AlertTriangle />} label="Danger / late" value={dangerSignals.toString()} hint="hindari FOMO" />
           <Metric icon={<WalletCards />} label="Wallet engine" value="DNA" hint="smart wallet scoring" />
-          <Metric icon={<BrainCircuit />} label="Mode" value="MVP" hint="mock data siap diganti API" />
+          <Metric icon={<BrainCircuit />} label="Mode" value="LIVE" hint="API route sudah tersedia" />
+        </section>
+
+        <section className="rounded-3xl border border-cyan-300/10 bg-radar-panel/80 p-5 shadow-xl shadow-black/20">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold">Live Tool Launcher</h2>
+              <p className="text-sm text-slate-400">Klik endpoint ini setelah deploy untuk melihat perubahan real dari API/backend.</p>
+            </div>
+            <Zap className="text-cyan-200" />
+          </div>
+          <div className="grid gap-3 md:grid-cols-4">
+            {liveTools.map((tool) => (
+              <a key={tool.href} href={tool.href} target="_blank" className="group rounded-2xl border border-white/10 bg-white/[0.035] p-4 transition hover:-translate-y-0.5 hover:bg-white/[0.07]">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <span className="rounded-full bg-cyan-400/15 px-2.5 py-1 text-[10px] font-black text-cyan-100 ring-1 ring-cyan-400/25">{tool.status}</span>
+                  <ExternalLink size={15} className="text-slate-400 group-hover:text-cyan-100" />
+                </div>
+                <p className="font-black text-white">{tool.title}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-400">{tool.desc}</p>
+                <code className="mt-3 block truncate rounded-xl bg-black/25 px-3 py-2 text-[11px] text-cyan-100">{tool.href}</code>
+              </a>
+            ))}
+          </div>
         </section>
 
         <section className="grid gap-5 lg:grid-cols-[1.45fr_0.8fr]">
@@ -146,12 +181,12 @@ export default function Home() {
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-radar-panel/80 p-5 shadow-xl shadow-black/20">
-              <h2 className="text-xl font-bold">Roadmap Engine</h2>
+              <h2 className="text-xl font-bold">Backend Status</h2>
               <div className="mt-4 space-y-3 text-sm text-slate-300">
-                <Step title="1. Market Radar" desc="CoinGecko + DEX Screener + exchange data." />
-                <Step title="2. Wallet DNA" desc="Smart wallet, whale, sniper, insider-like, exit wallet." />
-                <Step title="3. Futures Pressure" desc="OI, funding, long/short, liquidation cluster." />
-                <Step title="4. Backtest Memory" desc="Label win/loss untuk ngejar precision 70%+ pada setup ketat." />
+                <Step title="DEX Real Data" desc="/api/dex?q=SOL sudah siap untuk scan pair DEX real." />
+                <Step title="Coinalyze Futures" desc="/api/derivatives siap baca OI + funding jika env sudah diisi." />
+                <Step title="Supabase History" desc="/api/signals/history siap setelah DATABASE_URL + db push." />
+                <Step title="Prisma Build" desc="Build sudah menjalankan prisma generate otomatis." />
               </div>
             </div>
           </aside>
