@@ -1,8 +1,8 @@
 import type { TokenSignal } from './types';
-import { prisma } from './db';
+import { hasDatabase, prisma } from './db';
 
 export async function saveSignals(signals: TokenSignal[]) {
-  if (!process.env.DATABASE_URL) {
+  if (!hasDatabase) {
     return { saved: 0, skipped: true, reason: 'DATABASE_URL is not configured' };
   }
 
@@ -28,7 +28,7 @@ export async function saveSignals(signals: TokenSignal[]) {
 }
 
 export async function getRecentSignals(limit = 50) {
-  if (!process.env.DATABASE_URL) {
+  if (!hasDatabase) {
     return [];
   }
 
