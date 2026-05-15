@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model TokenSnapshot {
+  id                 String   @id @default(cuid())
+  symbol             String
+  name               String
+  chain              String
+  exchange           String
+  price              Float
+  marketCap          Float
+  fdv                Float
+  liquidity          Float
+  volume5m           Float
+  volume15m          Float
+  volume1h           Float
+  volume24h          Float
+  priceChange1h      Float
+  oiChange1h         Float
+  fundingRate        Float
+  smartWalletNetBuy  Float
+  whaleNetflow       Float
+  holderGrowth1h     Float
+  socialGrowth1h     Float
+  top10HolderPct     Float
+  devWalletMoved     Boolean
+  createdAt          DateTime @default(now())
+
+  @@index([symbol, chain, createdAt])
+}
+
+model Signal {
+  id           String   @id @default(cuid())
+  symbol       String
+  chain        String
+  pps          Int
+  risk         Int
+  signal       String
+  confidence   String
+  reasons      Json
+  warnings     Json
+  entryPrice   Float?
+  invalidPrice Float?
+  maxGainPct   Float?
+  maxDrawdownPct Float?
+  outcome      String? // WIN, LOSS, NEUTRAL, EXPIRED
+  createdAt    DateTime @default(now())
+  resolvedAt   DateTime?
+
+  @@index([symbol, chain, createdAt])
+  @@index([signal, pps, risk])
+}
+
+model WalletProfile {
+  id              String   @id @default(cuid())
+  address         String   @unique
+  chain           String
+  label           String   // Smart Accumulator, Whale, Sniper, Exit Liquidity, etc.
+  reputation      Float    @default(50)
+  historicalWinrate Float  @default(0)
+  avgLeadHours    Float    @default(0)
+  totalSignals    Int      @default(0)
+  notes           String?
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+}
