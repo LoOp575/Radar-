@@ -1,6 +1,7 @@
 import type { TokenInput } from './types';
 
 const DEXSCREENER_BASE_URL = (process.env.DEXSCREENER_API_BASE ?? 'https://api.dexscreener.com').replace(/\/$/, '');
+const HOT_QUERIES = ['AI', 'meme', 'solana', 'base', 'pepe', 'bonk', 'wif', 'virtual', 'aixbt', 'trump'];
 
 type DexPair = {
   chainId?: string;
@@ -115,13 +116,33 @@ export function dexPairToTokenInput(pair: DexPair): TokenInput | null {
   };
 }
 
-export async function scanDexQuery(query: string) {
-  const data = await searchDexPairs(query);
-  const pairs = Array.isArray(data.pairs) ? data.pairs : [];
+function cleanTokens(tokens: TokenInput[]) {
+  const map = new Map<string, TokenInput>();
 
-  return pairs
-    .map(dexPairToTokenInput)
-    .filter((pair): pair is TokenInput => Boolean(pair))
+  for (const token of tokens) {
+    const key = `${token.chain}:${token.symbol.toUpperCase()}`;
+    const existing = map.get(key);
+    if (!existing || token.volume1h + token.liquidity > existing.volume1h + existing.liquidity) {
+      map.set(key, token);
+    }
+  }
+
+  return Array.from(map.values())
     .filter((token) => token.liquidity >= 10_000 && token.volume1h >= 1_000)
+    .sort((a, b) => b.volume1h + b.liquidity * 0.15 - (a.volume1h + a.liquidity * 0.15))
     .slice(0, 40);
+}
+
+export async function scanDexQuery(query: string) {
+  const normalized = query.trim().toLowerCase();
+  const queries = ['hot', 'trending', 'market', 'scanner', 'all'].includes(normalized) ? HOT_QUERIES : [query];
+
+  const responses = await Promise.allSettled(queries.map((item) => searchDexPairs(item)));
+  const tokens = responses.flatMap((response) => {
+    if (response.status !== 'fulfilled') return [];
+    const pairs = Array.isArray(response.value.pairs) ? response.value.pairs : [];
+    return pairs.map(dexPairToTokenInput).filter((pair): pair is TokenInput => Boolean(pair));
+  });
+
+  return cleanTokens(tokens);
 }
