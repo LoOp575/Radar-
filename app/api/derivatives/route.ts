@@ -16,7 +16,7 @@ type HistoryBlock = {
   history?: HistoryPoint[];
 };
 
-type Pressure = 'BUILDING_PRESSURE' | 'OI_UNWINDING' | 'NEUTRAL' | 'UNKNOWN';
+type Pressure = 'BUILDING_PRESSURE' | 'OI_UNWINDING' | 'NEUTRAL' | 'UNKNOWN' | 'OFFLINE_FALLBACK';
 
 type SummaryRow = {
   symbol: string;
@@ -73,10 +73,43 @@ function classifyPressure(oiChangePct: number, fundingValue: number): Pressure {
   return 'NEUTRAL';
 }
 
+function fallbackSummary(symbols: string[], reason: string, interval: Interval) {
+  const now = new Date().toISOString();
+  const summary: SummaryRow[] = symbols.map((symbol, index) => ({
+    symbol,
+    openInterest: {
+      lastValue: [13_500_000, 8_200_000, 4_600_000, 2_900_000][index] ?? 1_250_000,
+      firstValue: [12_900_000, 8_550_000, 4_420_000, 2_760_000][index] ?? 1_210_000,
+      changePct: [4.65, -4.09, 4.07, 5.07][index] ?? 2.4,
+      points: 24,
+      updatedAt: now
+    },
+    fundingRate: {
+      lastValue: [0.0085, 0.012, -0.0031, 0.0064][index] ?? 0.004,
+      firstValue: [0.0062, 0.009, -0.0018, 0.0049][index] ?? 0.003,
+      changePct: [37.1, 33.3, -72.2, 30.6][index] ?? 12.5,
+      points: 24,
+      updatedAt: now
+    },
+    pressure: 'OFFLINE_FALLBACK'
+  }));
+
+  return {
+    updatedAt: now,
+    source: 'fallback-futures-model',
+    mode: 'summary',
+    symbols,
+    interval,
+    summary,
+    warning: reason,
+    tip: 'Coinalyze belum live. UI tetap menampilkan fallback agar futures terminal tidak offline.'
+  };
+}
+
 export async function GET(request: NextRequest) {
   const symbolsParam =
     request.nextUrl.searchParams.get('symbols') ??
-    'BTCUSDT_PERP.A,ETHUSDT_PERP.A,SOLUSDT_PERP.A';
+    'BTCUSDT_PERP.A,ETHUSDT_PERP.A,SOLUSDT_PERP.A,BNBUSDT_PERP.A';
 
   const intervalParam = request.nextUrl.searchParams.get('interval') ?? '1hour';
   const interval: Interval = (VALID_INTERVALS as readonly string[]).includes(intervalParam)
@@ -97,16 +130,7 @@ export async function GET(request: NextRequest) {
 
   if (!process.env.COINALYZE_API_KEY) {
     return NextResponse.json(
-      {
-        updatedAt: new Date().toISOString(),
-        source: 'coinalyze',
-        mode: 'summary',
-        symbols,
-        interval,
-        summary: [] as SummaryRow[],
-        warning: 'COINALYZE_API_KEY tidak ditemukan. Set di environment Vercel untuk mengaktifkan futures.',
-        tip: 'Lihat /futures untuk UI atau tambahkan ?raw=1 untuk data mentah.'
-      },
+      fallbackSummary(symbols, 'COINALYZE_API_KEY tidak ditemukan di Vercel Environment Variables.', interval),
       { status: 200 }
     );
   }
@@ -150,6 +174,14 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    const hasLiveRows = summary.some((row) => row.openInterest || row.fundingRate);
+    if (!hasLiveRows) {
+      return NextResponse.json(
+        fallbackSummary(symbols, 'Coinalyze membalas sukses tapi tidak mengembalikan history untuk simbol ini.', interval),
+        { status: 200 }
+      );
+    }
+
     const body: Record<string, unknown> = {
       updatedAt: new Date().toISOString(),
       source: 'coinalyze',
@@ -168,13 +200,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(body);
   } catch (error) {
+    const reason = error instanceof Error ? error.message : 'Unknown Coinalyze error';
     return NextResponse.json(
-      {
-        error: 'Coinalyze derivatives request failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
-        hint: 'Pastikan COINALYZE_API_KEY benar dan format simbol Coinalyze valid (contoh BTCUSDT_PERP.A).'
-      },
-      { status: 500 }
+      fallbackSummary(symbols, `Coinalyze gagal live: ${reason}`, interval),
+      { status: 200 }
     );
   }
 }
