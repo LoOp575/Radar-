@@ -2,6 +2,8 @@ import type { TokenInput } from './types';
 
 const DEXSCREENER_BASE_URL = (process.env.DEXSCREENER_API_BASE ?? 'https://api.dexscreener.com').replace(/\/$/, '');
 const HOT_QUERIES = ['AI', 'meme', 'solana', 'base', 'pepe', 'bonk', 'wif', 'virtual', 'aixbt', 'trump', 'pump', 'moonshot'];
+const LISTED_QUERIES = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'DOGE', 'ADA', 'AVAX', 'LINK', 'SUI', 'ARB', 'OP', 'PEPE', 'WIF', 'BONK', 'AAVE', 'UNI', 'FET', 'RNDR', 'INJ', 'TIA', 'SEI', 'JUP', 'ONDO', 'ENA'];
+const STABLE_OR_WRAPPED_SYMBOLS = new Set(['USDT', 'USDC', 'DAI', 'FDUSD', 'TUSD', 'WETH', 'WBTC', 'WBNB', 'WSOL']);
 
 type DexPair = {
   chainId?: string;
@@ -140,25 +142,39 @@ export function dexPairToTokenInput(pair: DexPair): TokenInput | null {
   };
 }
 
-function cleanTokens(tokens: TokenInput[]) {
+function tokenQualityScore(token: TokenInput) {
+  return token.volume1h * 1.8 + token.volume5m * 6 + token.liquidity * 0.08 + Math.max(0, token.priceChange1h) * 2_000;
+}
+
+function cleanTokens(tokens: TokenInput[], mode: 'hot' | 'listed' | 'custom' = 'hot') {
   const map = new Map<string, TokenInput>();
 
   for (const token of tokens) {
     const key = `${token.chain}:${token.symbol.toUpperCase()}`;
     const existing = map.get(key);
-    if (!existing || token.volume1h + token.liquidity > existing.volume1h + existing.liquidity) {
+    if (!existing || tokenQualityScore(token) > tokenQualityScore(existing)) {
       map.set(key, token);
     }
   }
 
-  return Array.from(map.values())
-    .filter((token) => token.liquidity >= 2_500 && token.volume1h >= 250)
-    .sort((a, b) => {
-      const scoreA = a.volume1h * 1.8 + a.volume5m * 6 + a.liquidity * 0.08 + Math.max(0, a.priceChange1h) * 2_000;
-      const scoreB = b.volume1h * 1.8 + b.volume5m * 6 + b.liquidity * 0.08 + Math.max(0, b.priceChange1h) * 2_000;
-      return scoreB - scoreA;
-    })
-    .slice(0, 60);
+  const base = Array.from(map.values()).filter((token) => {
+    if (STABLE_OR_WRAPPED_SYMBOLS.has(token.symbol.toUpperCase())) return false;
+
+    if (mode === 'listed') {
+      const cap = Math.max(token.marketCap, token.fdv);
+      return (
+        token.liquidity >= 50_000 &&
+        token.volume1h >= 10_000 &&
+        token.volume24h >= 100_000 &&
+        cap >= 500_000 &&
+        token.ageHours >= 24
+      );
+    }
+
+    return token.liquidity >= 2_500 && token.volume1h >= 250;
+  });
+
+  return base.sort((a, b) => tokenQualityScore(b) - tokenQualityScore(a)).slice(0, mode === 'listed' ? 40 : 60);
 }
 
 async function scanBoostedDiscovery() {
@@ -194,8 +210,9 @@ async function scanBoostedDiscovery() {
 export async function scanDexQuery(query: string) {
   const normalized = query.trim().toLowerCase();
   const isHot = ['hot', 'trending', 'market', 'scanner', 'all'].includes(normalized);
+  const isListed = ['listed', 'listing', 'cex', 'major', 'safe'].includes(normalized);
 
-  const searchQueries = isHot ? HOT_QUERIES : [query];
+  const searchQueries = isListed ? LISTED_QUERIES : isHot ? HOT_QUERIES : [query];
   const searchResponses = await Promise.allSettled(searchQueries.map((item) => searchDexPairs(item)));
   const searchTokens = searchResponses.flatMap((response) => {
     if (response.status !== 'fulfilled') return [];
@@ -204,5 +221,5 @@ export async function scanDexQuery(query: string) {
   });
 
   const boostedTokens = isHot ? await scanBoostedDiscovery() : [];
-  return cleanTokens([...boostedTokens, ...searchTokens]);
+  return cleanTokens([...boostedTokens, ...searchTokens], isListed ? 'listed' : isHot ? 'hot' : 'custom');
 }
