@@ -27,7 +27,7 @@ type ApiResponse = {
   signals: Signal[];
 };
 
-const quickQueries = ['SOL', 'AI', 'PEPE', 'ETH', 'BNB', 'BASE'];
+const quickQueries = ['HOT', 'AI', 'MEME', 'BASE', 'PEPE', 'SOL'];
 
 const compact = (value: number) =>
   Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 2 }).format(value || 0);
@@ -46,8 +46,8 @@ function scoreTone(score: number) {
 }
 
 export function LiveTradingTerminal() {
-  const [query, setQuery] = useState('SOL');
-  const [input, setInput] = useState('SOL');
+  const [query, setQuery] = useState('HOT');
+  const [input, setInput] = useState('HOT');
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +93,7 @@ export function LiveTradingTerminal() {
             </div>
             <div>
               <h2 className="text-lg font-black md:text-xl">Market Terminal</h2>
-              <p className="text-xs text-slate-500">real DEX scan · PPS rank · compact view</p>
+              <p className="text-xs text-slate-500">HOT scan = multi-keyword token discovery</p>
             </div>
           </div>
 
@@ -113,7 +113,7 @@ export function LiveTradingTerminal() {
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={(event) => event.key === 'Enter' && submitSearch()}
             className="min-w-0 flex-1 bg-transparent text-slate-100 outline-none placeholder:text-slate-600"
-            placeholder="SOL, PEPE, AI..."
+            placeholder="HOT, AI, MEME, PEPE..."
           />
           <button onClick={submitSearch} className="rounded-xl bg-cyan-300/15 px-3 py-1.5 text-xs font-black text-cyan-100 ring-1 ring-cyan-300/25">
             SCAN
@@ -183,8 +183,12 @@ export function LiveTradingTerminal() {
           <div className="space-y-2">
             {loading && rows.length === 0 ? (
               Array.from({ length: 5 }).map((_, index) => <SkeletonRow key={index} />)
-            ) : (
+            ) : rows.length > 0 ? (
               rows.map((row, index) => <SignalRow key={`${row.chain}-${row.exchange}-${row.symbol}-${index}`} row={row} index={index} />)
+            ) : (
+              <div className="rounded-2xl border border-amber-300/20 bg-amber-400/10 p-4 text-sm text-amber-100">
+                Tidak ada hasil untuk query ini. Coba HOT, AI, MEME, atau PEPE.
+              </div>
             )}
           </div>
         </div>
