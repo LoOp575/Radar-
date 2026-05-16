@@ -4,12 +4,28 @@ const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+export const hasDatabase = Boolean(process.env.DATABASE_URL);
+
+function buildClient() {
+  return new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error']
   });
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma;
 }
+
+function getClient(): PrismaClient {
+  if (!hasDatabase) {
+    throw new Error('DATABASE_URL is not configured. Set it in your environment to use the database.');
+  }
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = buildClient();
+  }
+  return globalForPrisma.prisma;
+}
+
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    const client = getClient();
+    const value = Reflect.get(client, prop);
+    return typeof value === 'function' ? value.bind(client) : value;
+  }
+});
