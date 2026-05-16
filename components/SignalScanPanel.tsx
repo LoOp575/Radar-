@@ -35,7 +35,7 @@ type ApiResponse = {
   signals: Signal[];
 };
 
-const quickScans = ['HOT', 'AI', 'MEME', 'BASE', 'PEPE', 'SOL', 'ETH', 'BNB'];
+const quickScans = ['LISTED', 'BTC', 'ETH', 'SOL', 'BNB', 'PEPE', 'SUI', 'ARB', 'HOT'];
 
 function compact(value: number) {
   return Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 2 }).format(value || 0);
@@ -67,14 +67,14 @@ function signalTone(signal: string) {
 }
 
 export function SignalScanPanel() {
-  const [query, setQuery] = useState('HOT');
-  const [input, setInput] = useState('HOT');
+  const [query, setQuery] = useState('LISTED');
+  const [input, setInput] = useState('LISTED');
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   async function scan(nextQuery = query) {
-    const cleaned = nextQuery.trim().toUpperCase() || 'HOT';
+    const cleaned = nextQuery.trim().toUpperCase() || 'LISTED';
     setLoading(true);
     setError(null);
     setQuery(cleaned);
@@ -99,7 +99,7 @@ export function SignalScanPanel() {
   }
 
   useEffect(() => {
-    scan('HOT');
+    scan('LISTED');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -113,11 +113,11 @@ export function SignalScanPanel() {
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-teal-50 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-teal-700 ring-1 ring-teal-100">
-              <Sparkles size={13} /> One Page Scanner
+              <Sparkles size={13} /> Listed Coin Scanner
             </div>
             <h1 className="text-3xl font-black tracking-tight text-slate-950 md:text-5xl">Signal Scanner</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              Ketik token atau pilih kategori, lalu hasil scan langsung muncul di halaman ini. Tidak perlu buka JSON API.
+              Mode default sekarang khusus koin yang sudah lebih matang/listing: liquidity besar, volume aktif, market cap valid, dan bukan micro coin baru.
             </p>
           </div>
 
@@ -134,7 +134,7 @@ export function SignalScanPanel() {
               value={input}
               onChange={(event) => setInput(event.target.value)}
               onKeyDown={(event) => event.key === 'Enter' && scan(input)}
-              placeholder="Contoh: HOT, AI, MEME, PEPE, SOL..."
+              placeholder="Contoh: LISTED, BTC, ETH, SOL, PEPE..."
               className="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-800 outline-none placeholder:text-slate-400"
             />
             <button
@@ -192,7 +192,7 @@ export function SignalScanPanel() {
       <div className="rounded-[2rem] border border-white/70 bg-white/80 p-4 shadow-xl shadow-teal-900/5 backdrop-blur-xl">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-black text-slate-950">Hasil Scan Koin</h2>
+            <h2 className="text-lg font-black text-slate-950">Hasil Scan Koin Listing</h2>
             <p className="text-xs text-slate-500">Source: {data?.source ?? 'loading'} · Updated: {data?.updatedAt ? new Date(data.updatedAt).toLocaleTimeString() : '--:--'}</p>
           </div>
           <Zap size={18} className="text-teal-500" />
@@ -204,8 +204,8 @@ export function SignalScanPanel() {
           </div>
         ) : signals.length === 0 ? (
           <div className="rounded-2xl bg-slate-50 p-6 text-center ring-1 ring-slate-200">
-            <p className="font-black text-slate-900">Belum ada koin yang cocok.</p>
-            <p className="mt-1 text-sm text-slate-500">Coba scan HOT, AI, MEME, BASE, atau PEPE.</p>
+            <p className="font-black text-slate-900">Belum ada koin listing yang cocok.</p>
+            <p className="mt-1 text-sm text-slate-500">Coba scan LISTED, BTC, ETH, SOL, PEPE, SUI, atau ARB.</p>
           </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
