@@ -1,7 +1,7 @@
 import type { TokenInput } from './types';
 
 const DEXSCREENER_BASE_URL = (process.env.DEXSCREENER_API_BASE ?? 'https://api.dexscreener.com').replace(/\/$/, '');
-const HOT_QUERIES = ['AI', 'meme', 'solana', 'base', 'pepe', 'bonk', 'wif', 'virtual', 'aixbt', 'trump'];
+const HOT_QUERIES = ['AI', 'meme', 'solana', 'base', 'pepe', 'bonk', 'wif', 'virtual', 'aixbt', 'trump', 'pump', 'moonshot'];
 
 type DexPair = {
   chainId?: string;
@@ -25,6 +25,16 @@ type DexPair = {
 
 type DexSearchResponse = {
   pairs?: DexPair[] | null;
+};
+
+type DexTokenDiscovery = {
+  chainId?: string;
+  tokenAddress?: string;
+  address?: string;
+  symbol?: string;
+  description?: string;
+  totalAmount?: number;
+  amount?: number;
 };
 
 async function dexFetch<T>(path: string): Promise<T> {
@@ -54,15 +64,29 @@ export async function searchDexPairs(query: string) {
 }
 
 export async function fetchTokenProfiles() {
-  return dexFetch('/token-profiles/latest/v1');
+  return dexFetch<DexTokenDiscovery[]>('/token-profiles/latest/v1');
 }
 
 export async function fetchLatestBoostedTokens() {
-  return dexFetch('/token-boosts/latest/v1');
+  return dexFetch<DexTokenDiscovery[]>('/token-boosts/latest/v1');
 }
 
 export async function fetchTopBoostedTokens() {
-  return dexFetch('/token-boosts/top/v1');
+  return dexFetch<DexTokenDiscovery[]>('/token-boosts/top/v1');
+}
+
+async function fetchTokenPairs(chainId: string, tokenAddress: string) {
+  try {
+    const pairs = await dexFetch<DexPair[]>(`/token-pairs/v1/${encodeURIComponent(chainId)}/${encodeURIComponent(tokenAddress)}`);
+    return Array.isArray(pairs) ? pairs : [];
+  } catch {
+    try {
+      const data = await dexFetch<DexSearchResponse>(`/latest/dex/tokens/${encodeURIComponent(tokenAddress)}`);
+      return Array.isArray(data.pairs) ? data.pairs : [];
+    } catch {
+      return [];
+    }
+  }
 }
 
 export function dexPairToTokenInput(pair: DexPair): TokenInput | null {
@@ -128,21 +152,57 @@ function cleanTokens(tokens: TokenInput[]) {
   }
 
   return Array.from(map.values())
-    .filter((token) => token.liquidity >= 10_000 && token.volume1h >= 1_000)
-    .sort((a, b) => b.volume1h + b.liquidity * 0.15 - (a.volume1h + a.liquidity * 0.15))
-    .slice(0, 40);
+    .filter((token) => token.liquidity >= 2_500 && token.volume1h >= 250)
+    .sort((a, b) => {
+      const scoreA = a.volume1h * 1.8 + a.volume5m * 6 + a.liquidity * 0.08 + Math.max(0, a.priceChange1h) * 2_000;
+      const scoreB = b.volume1h * 1.8 + b.volume5m * 6 + b.liquidity * 0.08 + Math.max(0, b.priceChange1h) * 2_000;
+      return scoreB - scoreA;
+    })
+    .slice(0, 60);
+}
+
+async function scanBoostedDiscovery() {
+  const [latest, top, profiles] = await Promise.allSettled([
+    fetchLatestBoostedTokens(),
+    fetchTopBoostedTokens(),
+    fetchTokenProfiles()
+  ]);
+
+  const discovery = [latest, top, profiles].flatMap((result) =>
+    result.status === 'fulfilled' && Array.isArray(result.value) ? result.value : []
+  );
+
+  const unique = new Map<string, DexTokenDiscovery>();
+  for (const item of discovery) {
+    const chainId = item.chainId;
+    const tokenAddress = item.tokenAddress ?? item.address;
+    if (!chainId || !tokenAddress) continue;
+    unique.set(`${chainId}:${tokenAddress}`, { ...item, chainId, tokenAddress });
+  }
+
+  const candidates = Array.from(unique.values()).slice(0, 24);
+  const pairResults = await Promise.allSettled(
+    candidates.map((item) => fetchTokenPairs(item.chainId!, item.tokenAddress!))
+  );
+
+  return pairResults.flatMap((result) => {
+    if (result.status !== 'fulfilled') return [];
+    return result.value.map(dexPairToTokenInput).filter((pair): pair is TokenInput => Boolean(pair));
+  });
 }
 
 export async function scanDexQuery(query: string) {
   const normalized = query.trim().toLowerCase();
-  const queries = ['hot', 'trending', 'market', 'scanner', 'all'].includes(normalized) ? HOT_QUERIES : [query];
+  const isHot = ['hot', 'trending', 'market', 'scanner', 'all'].includes(normalized);
 
-  const responses = await Promise.allSettled(queries.map((item) => searchDexPairs(item)));
-  const tokens = responses.flatMap((response) => {
+  const searchQueries = isHot ? HOT_QUERIES : [query];
+  const searchResponses = await Promise.allSettled(searchQueries.map((item) => searchDexPairs(item)));
+  const searchTokens = searchResponses.flatMap((response) => {
     if (response.status !== 'fulfilled') return [];
     const pairs = Array.isArray(response.value.pairs) ? response.value.pairs : [];
     return pairs.map(dexPairToTokenInput).filter((pair): pair is TokenInput => Boolean(pair));
   });
 
-  return cleanTokens(tokens);
+  const boostedTokens = isHot ? await scanBoostedDiscovery() : [];
+  return cleanTokens([...boostedTokens, ...searchTokens]);
 }
