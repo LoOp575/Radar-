@@ -81,7 +81,13 @@ export function SignalScanPanel() {
     setInput(cleaned);
 
     try {
-      const response = await fetch(`/api/dex?q=${encodeURIComponent(cleaned)}`, { cache: 'no-store' });
+      const response = await fetch(`/api/dex?q=${encodeURIComponent(cleaned)}`, {
+        cache: 'no-store',
+        headers: {
+          accept: 'application/json',
+          'x-radar-client': 'scanner-ui'
+        }
+      });
       const json = (await response.json()) as ApiResponse;
       if (!response.ok) throw new Error(json.errorMessage || 'Scanner API error');
       setData(json);
