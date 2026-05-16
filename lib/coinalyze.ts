@@ -21,17 +21,30 @@ async function coinalyzeFetch<T>(path: string, params: Record<string, string | n
     if (value !== undefined) url.searchParams.set(key, String(value));
   }
 
-  const response = await fetch(url.toString(), {
-    headers: { api_key: getApiKey() },
-    next: { revalidate: 60 }
-  });
+  const apiKey = getApiKey();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12_000);
 
-  if (!response.ok) {
-    const body = await response.text().catch(() => '');
-    throw new Error(`Coinalyze request failed ${response.status}: ${body}`);
+  try {
+    const response = await fetch(url.toString(), {
+      headers: {
+        accept: 'application/json',
+        api_key: apiKey,
+        'x-api-key': apiKey
+      },
+      cache: 'no-store',
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      throw new Error(`Coinalyze request failed ${response.status}: ${body.slice(0, 220)}`);
+    }
+
+    return response.json() as Promise<T>;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return response.json() as Promise<T>;
 }
 
 export type CoinalyzeMarket = {
