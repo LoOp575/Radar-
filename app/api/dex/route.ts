@@ -5,8 +5,23 @@ import { scoreTokens } from '@/lib/scoring';
 
 export const dynamic = 'force-dynamic';
 
+function isBrowserNavigation(request: NextRequest) {
+  const accept = request.headers.get('accept') ?? '';
+  const fetchMode = request.headers.get('sec-fetch-mode') ?? '';
+  const jsonIntent = request.headers.get('x-radar-client') === 'scanner-ui';
+
+  return !jsonIntent && fetchMode === 'navigate' && accept.includes('text/html');
+}
+
 export async function GET(request: NextRequest) {
-  const query = request.nextUrl.searchParams.get('q') ?? 'SOL';
+  const query = request.nextUrl.searchParams.get('q') ?? 'HOT';
+
+  if (isBrowserNavigation(request)) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    url.search = `?scan=${encodeURIComponent(query)}`;
+    return NextResponse.redirect(url);
+  }
 
   try {
     const tokens = await scanDexQuery(query);
